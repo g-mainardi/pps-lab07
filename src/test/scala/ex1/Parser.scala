@@ -14,6 +14,7 @@ class ParserTests:
   // note we do not need a class name here, we use the structural type
   def parserNTCNE = new BasicParser(Set('X', 'Y', 'Z')) with NotTwoConsecutive[Char] with NonEmpty[Char]
   def sparser: Parser[Char] = "abc".charParser()
+  def parserSTN = new ShortenThenNParser(Set('a', 'b', 'c'))(5)
 
   @Test
   def testBasicParser =
@@ -44,3 +45,10 @@ class ParserTests:
     assertTrue(sparser.parseAll("aabc".toList))
     assertFalse(sparser.parseAll("aabcdc".toList))
     assertTrue(sparser.parseAll("".toList))
+
+  @Test
+  def testShortenThenNParser =
+    assertTrue(parserSTN.parseAll("aabc".toList))
+    assertFalse(parserSTN.parseAll("aabbcc".toList))
+    assertTrue(parserSTN.parseAll("ac".toList))
+    assertTrue(parserSTN.parseAll("".toList))

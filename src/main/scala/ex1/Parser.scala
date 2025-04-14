@@ -46,6 +46,17 @@ trait NotTwoConsecutive[T] extends Parser[T]:
 class NotTwoConsecutiveParser(chars: Set[Char])
     extends BasicParser(chars) with NotTwoConsecutive[Char]
 
+trait ShortenThenN[T](n: Int) extends Parser[T]:
+  var count: Int = 0
+  abstract override def parse(t: T): Boolean =
+    count += 1
+    super.parse(t)
+
+  abstract override def end: Boolean = !(count > n) && super.end
+
+class ShortenThenNParser(chars: Set[Char])(n: Int)
+  extends BasicParser(chars) with ShortenThenN[Char](n)
+
 @main def checkParsers(): Unit =
   import ex1.Parsers.charParser
   println("Test Basic parser [true, false, true]")
@@ -83,3 +94,10 @@ class NotTwoConsecutiveParser(chars: Set[Char])
   println(sparser.parseAll("aabc".toList)) // true
   println(sparser.parseAll("aabcdc".toList)) // false
   println(sparser.parseAll("".toList)) // true
+
+  println("Test ShortenThenN parser [true, false, true]")
+  def parserSTN = new ShortenThenNParser(Set('a', 'b', 'c'))(5)
+  println(parserSTN.parseAll("aabc".toList)) // true
+  println(parserSTN.parseAll("aabbcc".toList)) // false
+  println(parserSTN.parseAll("ac".toList)) // true
+  println(parserSTN.parseAll("".toList)) // true
