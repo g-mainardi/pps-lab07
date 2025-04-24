@@ -46,7 +46,9 @@ class RobotCanFailSpec extends AnyFlatSpec with Matchers:
     val failProb = 0.5
     val attempts = 1000
 
-    (1 to attempts map {robot.act(failProb); (0, _)} ).toSet should contain (robot.position)
+    val possiblePositions = 0 to attempts map {(0, _)}
+    possiblePositions.foreach(_ => robot.act(failProb))
+    possiblePositions should contain (robot.position)
 
   it should "launch illegal argument exception" in :
     val robot = freshRobot
@@ -54,7 +56,6 @@ class RobotCanFailSpec extends AnyFlatSpec with Matchers:
     an[IllegalArgumentException] should be thrownBy robot.turn(Direction.East, 3.0)
     an[IllegalArgumentException] should be thrownBy robot.turn(Direction.East, -0.5)
     an[IllegalArgumentException] should be thrownBy robot.turn(Direction.East, 100)
-
 
   it should "always fail" in :
     val robot = freshRobot

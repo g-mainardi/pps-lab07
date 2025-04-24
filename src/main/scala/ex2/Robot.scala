@@ -50,14 +50,12 @@ class RobotWithBattery(val robot: Robot, var batteryLevel: Int):
 
 class RobotCanFail(val robot: Robot):
   export robot.{position, direction}
-  import scala.util.Random
-  private val rand = Random()
+  private val rand = scala.util.Random()
   private def checkProb(prob: Double): Unit = if !(prob >= 0 && prob <= 1) then 
-    throw new IllegalArgumentException("Probability must be between 0.0 and 1.0")
-  private def canDoAction(prob: Double): Boolean = 
-    checkProb(prob); rand.nextDouble() > prob
-  def turn(dir: Direction, prob: Double): Unit = if canDoAction(prob) then robot.turn(dir)
-  def act(prob: Double): Unit = if canDoAction(prob) then robot.act()
+    throw IllegalArgumentException("Probability must be between 0.0 and 1.0")
+  private def doAction(a: => Unit, prob: Double): Unit = {checkProb(prob); if rand.nextDouble() > prob then a}
+  def turn(dir: Direction, prob: Double): Unit = doAction(robot.turn(dir), prob)
+  def act(prob: Double): Unit = doAction(robot.act(), prob)
 
 class RobotRepeated(val robot: Robot):
   export robot.{position, direction, turn, act}
