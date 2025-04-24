@@ -62,6 +62,11 @@ class RobotCanFail(val robot: Robot):
   def turn(dir: Direction, prob: Double): Unit = if canDoAction(prob) then robot.turn(dir)
   def act(prob: Double): Unit = if canDoAction(prob) then robot.act()
 
+class RobotRepeated(val robot: Robot):
+  export robot.{position, direction, turn, act}
+  def turn(dir: Direction, times: Int): Unit = 1 to times foreach(_ => turn(dir))
+  def act(times: Int): Unit = 1 to times foreach(_ => act())
+
 @main def testRobot(): Unit =
   val robot = LoggingRobot(SimpleRobot((0, 0), Direction.North))
   robot.act() // robot at (0, 1) facing North
