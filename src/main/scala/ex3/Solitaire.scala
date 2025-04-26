@@ -30,6 +30,11 @@ object Solitaire extends App:
   def isOccupied(mark1: Position, mark2: Position): Boolean = mark1 == mark2
   def isSafe(mark: Position, marks: Solution) =
     marks forall (!isOccupied(mark, _))
+  val offsets: Set[Position] = for
+      (x, y) <- Set((2, 2), (3, 0), (0, 3))        // 3 types of movements: diagonal, horizontal and vertical
+      xi <- if x == 0 then Seq(0) else Seq(x, -x)
+      yi <- if y == 0 then Seq(0) else Seq(y, -y)
+  yield (xi, yi)
 
 
   println(render(solution = Seq((0, 0), (2, 1)), board(width = 3, height = 3)))
