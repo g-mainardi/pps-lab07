@@ -25,11 +25,10 @@ object Solitaire extends App:
           yield if number > 0 then "%-2d ".format(number) else "X  "
       yield row.mkString
     rows.mkString("\n")
-  def isInside(b: Board, position: (Int, Int)): Boolean =
-    (position._1 >= 0) && (position._1 <= b.width - 1) && (position._2 >= 0) && (position._2 <= b.height - 1)
-  def isOccupied(mark1: Position, mark2: Position): Boolean = mark1 == mark2
-  def isSafe(mark: Position, marks: Solution) =
-    marks forall (!isOccupied(mark, _))
+  def isInside(b: Board, pos: Position): Boolean =
+    def _isInLimit(n: Int, limit: Int): Boolean = (n >= 0) && (n < limit)
+    _isInLimit(pos._1, b.width) && _isInLimit(pos._2, b.height)
+
   val offsets: Set[Position] = for
       (x, y) <- Set((2, 2), (3, 0), (0, 3))        // 3 types of movements: diagonal, horizontal and vertical
       xi <- if x == 0 then Seq(0) else Seq(x, -x)
@@ -43,7 +42,7 @@ object Solitaire extends App:
           numbers <- _placeNumbers(n - 1)
           offset <- offsets
           number = numbers.last + offset
-          if isInside(b, number) && isSafe(number, numbers)
+          if isInside(b, number) && !numbers.contains(number)
         yield
           numbers :+ number
     _placeNumbers(b.width * b.height)
