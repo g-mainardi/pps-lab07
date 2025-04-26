@@ -35,6 +35,22 @@ object Solitaire extends App:
       xi <- if x == 0 then Seq(0) else Seq(x, -x)
       yi <- if y == 0 then Seq(0) else Seq(y, -y)
   yield (xi, yi)
+  def placeMarks(b: Board): LazyList[Solution] =
+    def _placeNumbers(n: Int): LazyList[Solution] = n match
+      case 1 => LazyList(LazyList(b.middle))
+      case _ =>
+        for
+          numbers <- _placeNumbers(n - 1)
+          offset <- offsets
+          number = numbers.last + offset
+          if isInside(b, number) && isSafe(number, numbers)
+        yield
+          numbers :+ number
+    _placeNumbers(b.width * b.height)
 
+  val b = board(width = 5, height = 5)
+  val solutions: Seq[(Solution, Int)] = placeMarks(b).zipWithIndex
 
-  println(render(solution = Seq((0, 0), (2, 1)), board(width = 3, height = 3)))
+  // Print solution + render + index
+  solutions.foreach(sol => println(s"${sol._1}\n${render(sol._1, b)}\nIndice: ${sol._2}\n"))
+  println("Number of solutions: " + solutions.size)
