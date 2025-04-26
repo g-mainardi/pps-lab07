@@ -9,7 +9,10 @@ object Solitaire extends App:
         case (w, _) => w
       def height: Int = b match
         case (_, h) => h
+      def middle: Position = (b.width / 2, b.height / 2)
     type Position = (Int, Int)
+    extension (p: Position)
+      def +(q: Position): Position = (p._1 + q._1, p._2 + q._2)
     type Solution = Seq[Position]
   }
   import Elements.*
