@@ -14,7 +14,7 @@ object Solitaire extends App:
   }
   import Elements.*
   def render(solution: Solution, b: Board): String =
-    val reversed = solution.reverse
+    val reversed = solution//.reverse
     val rows =
       for y <- 0 until b.height
           row = for x <- 0 until b.width
