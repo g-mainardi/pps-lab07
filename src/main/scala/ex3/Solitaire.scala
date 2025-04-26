@@ -25,6 +25,11 @@ object Solitaire extends App:
           yield if number > 0 then "%-2d ".format(number) else "X  "
       yield row.mkString
     rows.mkString("\n")
+  def isInside(b: Board, position: (Int, Int)): Boolean =
+    (position._1 >= 0) && (position._1 <= b.width - 1) && (position._2 >= 0) && (position._2 <= b.height - 1)
+  def isOccupied(mark1: Position, mark2: Position): Boolean = mark1 == mark2
+  def isSafe(mark: Position, marks: Solution) =
+    marks forall (!isOccupied(mark, _))
 
 
   println(render(solution = Seq((0, 0), (2, 1)), board(width = 3, height = 3)))
