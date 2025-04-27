@@ -25,6 +25,8 @@ object ConnectThree extends App:
   type Board = Seq[Disk]
   type Game = Seq[Board]
 
+  def emptyBoard: Board = Seq()
+  def newGame: Game = Seq(emptyBoard)
   import Player.*
 
   def find(board: Board, x: Int, y: Int): Option[Player] = board.find(d => (d.x == x) && (d.y == y)).map(_.player)
@@ -42,7 +44,15 @@ object ConnectThree extends App:
     yield
       board :+ Disk(x, y, player)
 
-  def computeAnyGame(player: Player, moves: Int): LazyList[Game] = ???
+  def computeAnyGame(player: Player, moves: Int): LazyList[Game] = moves match
+    case 0 => LazyList(newGame)
+    case _ =>
+      for
+        game <- computeAnyGame(player.other, moves - 1)
+        new_board <- placeAnyDisk(game.last, player)
+      yield
+        game :+ new_board
+
 
   def printBoards(game: Seq[Board]): Unit =
     for
