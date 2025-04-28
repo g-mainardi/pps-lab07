@@ -1,5 +1,7 @@
 package ex4
 
+import scala.annotation.tailrec
+
 object ConnectThreeElements {
   val marksToWin = 3
   val bound = 3
@@ -107,6 +109,17 @@ object ConnectThree extends App:
         print(" ")
         if board == game.head then println()
 
+  import scala.util.Random
+  val rand = Random(42)
+  def randomAi(board: Board, side: Player): Board =
+    val avPos: Seq[(Int, Int)] = for
+      x <- 0 to bound
+      y <- firstAvailableRow(board, x)
+    yield
+      (x, y)
+    val randPos: (Int, Int) = avPos(rand.nextInt(avPos.size))
+    board :+ Disk(randPos._1, randPos._2, side)
+
   // Exercise 1: implement find such that..
   println("EX 1: ")
   println(find(List(Disk(0, 0, X)), 0, 0)) // Some(X)
@@ -168,3 +181,11 @@ object ConnectThree extends App:
   val endGame: Game = Seq(board :+ Disk(2, 0, X))
   printBoards(endGame)
   endGame.endPrint()
+  @tailrec
+  def playRandomAi(board: Board, player: Player): Unit = board.winner match
+    case Some(w) => printBoards(Seq(board));println(s"The winner is $w")
+    case _       => playRandomAi(randomAi(board,player), player.other)
+
+  playRandomAi(emptyBoard, X)
+  playRandomAi(emptyBoard, X)
+  playRandomAi(emptyBoard, X)
