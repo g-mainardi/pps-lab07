@@ -1,17 +1,18 @@
 package ex4
 
 import java.util.OptionalInt
-
-// Optional!
-object ConnectThree extends App:
+object ConnectThreeElements {
   val bound = 3
+
   enum Player:
     case X, O
+
     def other: Player = this match
       case X => O
       case _ => X
 
   case class Disk(x: Int, y: Int, player: Player)
+
   /**
    * Board:
    * y
@@ -20,13 +21,19 @@ object ConnectThree extends App:
    * 2
    * 1
    * 0
-   *   0 1 2 3 <-- x
+   * 0 1 2 3 <-- x
    */
   type Board = Seq[Disk]
   type Game = Seq[Board]
 
   def emptyBoard: Board = Seq()
   def newGame: Game = Seq(emptyBoard)
+
+
+// Optional!
+object ConnectThree extends App:
+
+  import ConnectThreeElements.*
   import Player.*
 
   def find(board: Board, x: Int, y: Int): Option[Player] = board.find(d => (d.x == x) && (d.y == y)).map(_.player)
