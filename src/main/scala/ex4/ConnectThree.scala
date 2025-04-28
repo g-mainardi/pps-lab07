@@ -85,6 +85,16 @@ object ConnectThree extends App:
       yield
         game :+ new_board
 
+  def computeAnyGameStopping(player: Player, moves: Int): LazyList[Game] = moves match
+    case 0 => LazyList(newGame)
+    case _ =>
+      for
+        game <- computeAnyGameStopping(player.other, moves - 1)
+        new_board <- placeAnyDisk(game.last, player)
+      yield
+        if game.lastWinner.isEmpty
+        then game :+ new_board
+        else game
 
   def printBoards(game: Seq[Board]): Unit =
     for
@@ -139,3 +149,22 @@ object ConnectThree extends App:
 // .... X... X... X... X...
 
 // Exercise 4 (VERY ADVANCED!) -- modify the above one so as to stop each game when someone won!!
+  computeAnyGameStopping(O, 8).foreach { g =>
+    printBoards(g)
+    println()
+  }
+
+  //    OO..
+  //    XX..
+  //    OO..
+  //    XX.X
+  val board: Board = List(Disk(0, 0, X), Disk(0, 1, O), Disk(0, 2, X), Disk(0, 3, O), Disk(1, 0, X), Disk(1, 1, O), Disk(1, 2, X), Disk(1, 3, O), Disk(3, 0, X))
+  println(s"Board state: \n $board")
+
+  val game: Game = Seq(board)
+  printBoards(game)
+  game.endPrint()
+
+  val endGame: Game = Seq(board :+ Disk(2, 0, X))
+  printBoards(endGame)
+  endGame.endPrint()
