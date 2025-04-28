@@ -1,7 +1,7 @@
 package ex4
 
-import java.util.OptionalInt
 object ConnectThreeElements {
+  val marksToWin = 3
   val bound = 3
 
   enum Player:
@@ -29,8 +29,33 @@ object ConnectThreeElements {
   def emptyBoard: Board = Seq()
   def newGame: Game = Seq(emptyBoard)
 
+  opaque type Axis = (Int, Int) => (Int, Int)
+  private val axis_X: Axis = (x, y) => (y, x)
+  private val axis_Y: Axis = (_, _)
 
-// Optional!
+  extension (board: Board)
+    private def maxConsecutive(seq: Seq[Int]): Int =
+      seq.foldLeft((0, 0)) { case ((mx, cur), v) =>
+        val c = if v == 1 then cur + 1 else 0
+        (mx max c, c)
+      }._1
+    private def positions(player: Player): Set[(Int, Int)] =
+      board.collect { case c if c.player == player => (c.x, c.y) }.toSet
+    private def maxStreakOn(player: Player, axis: Axis): Seq[Int] =
+      val pos = board.positions(player)
+      0 to bound map { y => maxConsecutive(0 to bound map { x => if pos(axis(x, y)) then 1 else 0 }) }
+    def maxStreakOnRows(player: Player): Seq[Int] = maxStreakOn(player, axis_Y)
+    def maxStreakOnCols(player: Player): Seq[Int] = maxStreakOn(player, axis_X)
+    def maxStreak(player: Player): Int = Seq(board.maxStreakOnRows(player).max, board.maxStreakOnCols(player).max).max
+    def winner: Option[Player] = Player.values find {maxStreak(_) >= marksToWin}
+
+  extension (game: Game)
+    def lastWinner: Option[Player] = game.last.winner
+    def endPrint(): Unit =
+      val isOver = game.lastWinner
+      println(if isOver.isDefined then s"Game over, the winner is ${isOver.get}" else "Game is not over")
+}
+
 object ConnectThree extends App:
 
   import ConnectThreeElements.*
