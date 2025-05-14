@@ -19,11 +19,15 @@ object ConnectThreeElements {
    * Board:
    * y
    *
-   * 3
-   * 2
-   * 1
-   * 0
-   * 0 1 2 3 <-- x
+   * 3 _ _ _ _
+   *
+   * 2 _ _ _ _
+   *
+   * 1 _ _ _ _
+   *
+   * 0 _ _ _ _
+   *
+   *  >0 1 2 3 <-- x
    */
   type Board = Seq[Disk]
   type Game = Seq[Board]
@@ -44,7 +48,7 @@ object ConnectThreeElements {
     private def positions(player: Player): Set[(Int, Int)] =
       board.collect { case c if c.player == player => (c.x, c.y) }.toSet
     private def maxStreakOn(player: Player, axis: Axis): Seq[Int] =
-      val pos = board.positions(player)
+      val pos = board positions player
       0 to bound map { y => maxConsecutive(0 to bound map { x => if pos(axis(x, y)) then 1 else 0 }) }
     def maxStreakOnRows(player: Player): Seq[Int] = maxStreakOn(player, axis_Y)
     def maxStreakOnCols(player: Player): Seq[Int] = maxStreakOn(player, axis_X)
@@ -54,14 +58,13 @@ object ConnectThreeElements {
   extension (game: Game)
     def lastWinner: Option[Player] = game.last.winner
     def endPrint(): Unit =
-      val isOver = game.lastWinner
-      println(if isOver.isDefined then s"Game over, the winner is ${isOver.get}" else "Game is not over")
+      val winner = game.lastWinner
+      println(if winner.isDefined then s"Game over, the winner is ${winner.get}" else "Game is not over")
 }
 
-object ConnectThree extends App:
+object ConnectThreeFunctions {
 
   import ConnectThreeElements.*
-  import Player.*
 
   def find(board: Board, x: Int, y: Int): Option[Player] = board.find(d => (d.x == x) && (d.y == y)).map(_.player)
 
@@ -82,7 +85,7 @@ object ConnectThree extends App:
     case 0 => LazyList(newGame)
     case _ =>
       for
-        game <- computeAnyGame(player.other, moves - 1)
+        game      <- computeAnyGame(player.other, moves - 1)
         new_board <- placeAnyDisk(game.last, player)
       yield
         game :+ new_board
@@ -91,23 +94,29 @@ object ConnectThree extends App:
     case 0 => LazyList(newGame)
     case _ =>
       for
-        game <- computeAnyGameStopping(player.other, moves - 1)
+        game      <- computeAnyGameStopping(player.other, moves - 1)
         new_board <- placeAnyDisk(game.last, player)
       yield
-        if game.lastWinner.isEmpty
-        then game :+ new_board
-        else game
+        if game.lastWinner.isEmpty then 
+          game :+ new_board
+        else 
+          game
 
   def printBoards(game: Seq[Board]): Unit =
     for
-      y <- bound to 0 by -1
+      y     <- bound to 0 by -1
       board <- game.reverse
-      x <- 0 to bound
+      x     <- 0 to bound
     do
-      print(find(board, x, y).map(_.toString).getOrElse("."))
-      if x == bound then
-        print(" ")
-        if board == game.head then println()
+      print(find(board, x, y) map(_.toString) getOrElse ".")
+      (x, game.head) match
+        case (`bound`, `board`) => println("\t")
+        case (`bound`, _)       => print("\t")
+        case _                  => ()
+
+  def printGame(g: Game): Unit =
+    printBoards(g)
+    g.endPrint()
 
   import scala.util.Random
   val rand = Random(42)
@@ -117,9 +126,15 @@ object ConnectThree extends App:
       y <- firstAvailableRow(board, x)
     yield
       (x, y)
-    val randPos: (Int, Int) = avPos(rand.nextInt(avPos.size))
+    val randPos: (Int, Int) = avPos(rand nextInt avPos.size)
     board :+ Disk(randPos._1, randPos._2, side)
+}
 
+object ConnectThree extends App:
+
+  import ConnectThreeElements.*
+  import Player.*
+  import ConnectThreeFunctions.*
   // Exercise 1: implement find such that..
   println("EX 1: ")
   println(find(List(Disk(0, 0, X)), 0, 0)) // Some(X)
@@ -145,44 +160,36 @@ object ConnectThree extends App:
   // ...X .... .... ....
   // ...O ..XO .X.O X..O
   println("EX 4: ")
-// Exercise 3 (ADVANCED!): implement computeAnyGame such that..
-  computeAnyGame(O, 4).foreach { g =>
-    printBoards(g)
-    println()
-  }
-//  .... .... .... .... ...O
-//  .... .... .... ...X ...X
-//  .... .... ...O ...O ...O
-//  .... ...X ...X ...X ...X
-//
-//
-// .... .... .... .... O...
-// .... .... .... X... X...
-// .... .... O... O... O...
-// .... X... X... X... X...
+  // Exercise 3 (ADVANCED!): implement computeAnyGame such that..
+  computeAnyGame(O, 4) foreach { g => {printBoards(g); println}}
+  // .... .... .... .... ...O
+  // .... .... .... ...X ...X
+  // .... .... ...O ...O ...O
+  // .... ...X ...X ...X ...X
+  //
+  //
+  // .... .... .... .... O...
+  // .... .... .... X... X...
+  // .... .... O... O... O...
+  // .... X... X... X... X...
 
-// Exercise 4 (VERY ADVANCED!) -- modify the above one so as to stop each game when someone won!!
-  computeAnyGameStopping(O, 8).foreach { g =>
-    printBoards(g)
-    println()
-  }
-
-  //    OO..
-  //    XX..
-  //    OO..
-  //    XX.X
+  // Exercise 4 (VERY ADVANCED!) -- modify the above one so as to stop each game when someone won!!
+  computeAnyGameStopping(O, 8) foreach { g => {printBoards(g); println}}
+  // OO..
+  // XX..
+  // OO..
+  // XX.X
   val board: Board = List(Disk(0, 0, X), Disk(0, 1, O), Disk(0, 2, X), Disk(0, 3, O), Disk(1, 0, X), Disk(1, 1, O), Disk(1, 2, X), Disk(1, 3, O), Disk(3, 0, X))
   println(s"Board state: \n $board")
 
-  val game: Game = Seq(board)
-  printBoards(game)
-  game.endPrint()
+  private val game: Game = Seq(board)
+  printGame(game)
 
-  val endGame: Game = Seq(board :+ Disk(2, 0, X))
-  printBoards(endGame)
-  endGame.endPrint()
+  private val endGame: Game = Seq(board :+ Disk(2, 0, X))
+  printGame(endGame)
+
   @tailrec
-  def playRandomAi(board: Board, player: Player): Unit = board.winner match
+  private def playRandomAi(board: Board, player: Player): Unit = board.winner match
     case Some(w) => printBoards(Seq(board));println(s"The winner is $w")
     case _       => playRandomAi(randomAi(board,player), player.other)
 
