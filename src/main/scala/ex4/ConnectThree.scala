@@ -42,11 +42,11 @@ object ConnectThreeElements {
   extension (board: Board)
     private def maxConsecutive(seq: Seq[Int]): Int =
       seq.foldLeft((0, 0)) { case ((mx, cur), v) =>
-        val c = if v == 1 then cur + 1 else 0
+        val c = v match {case 1 => cur + 1; case _ => 0}
         (mx max c, c)
       }._1
     private def positions(player: Player): Set[(Int, Int)] =
-      board.collect { case c if c.player == player => (c.x, c.y) }.toSet
+      board.collect { case Disk(x, y, `player`) => (x, y) }.toSet
     private def maxStreakOn(player: Player, axis: Axis): Seq[Int] =
       val pos = board positions player
       0 to bound map { y => maxConsecutive(0 to bound map { x => if pos(axis(x, y)) then 1 else 0 }) }
@@ -113,6 +113,7 @@ object ConnectThreeFunctions {
         case (`bound`, `board`) => println("\t")
         case (`bound`, _)       => print("\t")
         case _                  => ()
+  def printBoard(board: Board): Unit = {printBoards(Seq(board)); println()}
 
   def printGame(g: Game): Unit =
     printBoards(g)
@@ -180,6 +181,11 @@ object ConnectThree extends App:
   // OO..
   // XX.X
   val board: Board = List(Disk(0, 0, X), Disk(0, 1, O), Disk(0, 2, X), Disk(0, 3, O), Disk(1, 0, X), Disk(1, 1, O), Disk(1, 2, X), Disk(1, 3, O), Disk(3, 0, X))
+  printBoard(board)
+  // OO..
+  // XX..
+  // OO..
+  // XX.X
   println(s"Board state: \n $board")
 
   private val game: Game = Seq(board)
@@ -190,7 +196,7 @@ object ConnectThree extends App:
 
   @tailrec
   private def playRandomAi(board: Board, player: Player): Unit = board.winner match
-    case Some(w) => printBoards(Seq(board));println(s"The winner is $w")
+    case Some(w) => printBoard(board);println(s"The winner is $w")
     case _       => playRandomAi(randomAi(board,player), player.other)
 
   playRandomAi(emptyBoard, X)
