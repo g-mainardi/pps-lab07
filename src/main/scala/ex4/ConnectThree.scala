@@ -50,6 +50,7 @@ object ConnectThreeElements {
     private def maxStreakOn(player: Player, axis: Axis): Seq[Int] =
       val pos = board positions player
       0 to bound map { y => maxConsecutive(0 to bound map { x => if pos(axis(x, y)) then 1 else 0 }) }
+    def disksOnRow(r: Int, p: Player): Int = board count{case Disk(_, `r`, `p`) => true; case _ => false}
     def maxStreakOnRows(player: Player): Seq[Int] = maxStreakOn(player, axis_Y)
     def maxStreakOnCols(player: Player): Seq[Int] = maxStreakOn(player, axis_X)
     def maxStreak(player: Player): Int = Seq(board.maxStreakOnRows(player).max, board.maxStreakOnCols(player).max).max
@@ -119,16 +120,33 @@ object ConnectThreeFunctions {
     printBoards(g)
     g.endPrint()
 
+  trait AI(val side: Player) {
+    def play(board: Board): Board
+    override def toString: String = s"${getClass.getSimpleName}($side)"
+  }
   import scala.util.Random
-  val rand = Random(42)
-  def randomAi(board: Board, side: Player): Board =
-    val avPos: Seq[(Int, Int)] = for
-      x <- 0 to bound
-      y <- firstAvailableRow(board, x)
-    yield
-      (x, y)
-    val randPos: (Int, Int) = avPos(rand nextInt avPos.size)
-    board :+ Disk(randPos._1, randPos._2, side)
+  class RandomAI(side: Player, seed: Int = 42) extends AI(side){
+    val rand = Random(seed)
+    override def play(board: Board): Board =
+      val avPos: Seq[(Int, Int)] = for
+        x <- 0 to bound
+        y <- firstAvailableRow(board, x)
+      yield
+        (x, y)
+      val randPos: (Int, Int) = avPos(rand nextInt avPos.size)
+      board :+ Disk(randPos._1, randPos._2, side)
+  }
+  class SmartAI(side: Player) extends AI(side){
+    def play(board: Board): Board =
+      val avPosCounts: Map[(Int, Int), Int] = (
+        for
+          x <- 0 to bound
+          y <- firstAvailableRow(board, x)
+          c = board disksOnRow(y, side)
+        yield (x, y) -> c).toMap
+      val bestPos: (Int, Int) = avPosCounts.maxBy(_._2)._1
+      board :+ Disk(bestPos._1, bestPos._2, side)
+  }
 }
 
 object ConnectThree extends App:
@@ -176,10 +194,6 @@ object ConnectThree extends App:
 
   // Exercise 4 (VERY ADVANCED!) -- modify the above one so as to stop each game when someone won!!
   computeAnyGameStopping(O, 8) foreach { g => {printBoards(g); println}}
-  // OO..
-  // XX..
-  // OO..
-  // XX.X
   val board: Board = List(Disk(0, 0, X), Disk(0, 1, O), Disk(0, 2, X), Disk(0, 3, O), Disk(1, 0, X), Disk(1, 1, O), Disk(1, 2, X), Disk(1, 3, O), Disk(3, 0, X))
   printBoard(board)
   // OO..
@@ -194,11 +208,21 @@ object ConnectThree extends App:
   private val endGame: Game = Seq(board :+ Disk(2, 0, X))
   printGame(endGame)
 
-  @tailrec
-  private def playRandomAi(board: Board, player: Player): Unit = board.winner match
-    case Some(w) => printBoard(board);println(s"The winner is $w")
-    case _       => playRandomAi(randomAi(board,player), player.other)
+  println()
 
-  playRandomAi(emptyBoard, X)
-  playRandomAi(emptyBoard, X)
-  playRandomAi(emptyBoard, X)
+  private def autoPlayAi(ai1: AI, ai2: AI, log: Boolean = false): Unit =
+    assert(ai1.side != ai2.side)
+    println(s"Start match! $ai1 vs $ai2")
+    @tailrec
+    def _autoPlayAi(b: Board, ai1: AI, ai2: AI): Unit = b.winner match
+      case Some(w) => printBoard(b); println(s"The winner is $w")
+      case _ =>
+        if log then printBoard(b)
+        _autoPlayAi(ai1 play b, ai2, ai1)
+    _autoPlayAi(emptyBoard, ai1, ai2)
+
+  autoPlayAi(RandomAI(X, seed = 42), SmartAI(O), log = true)
+  autoPlayAi(RandomAI(X, seed = 18), SmartAI(O), log = true)
+  autoPlayAi(RandomAI(X, seed = 69), SmartAI(O), log = true)
+
+  autoPlayAi(SmartAI(O), RandomAI(X), log = true)
