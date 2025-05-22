@@ -1,7 +1,5 @@
 package ex4
 
-import scala.annotation.tailrec
-
 object ConnectThreeElements {
   val marksToWin = 3
   val bound = 3
@@ -67,7 +65,7 @@ object ConnectThreeFunctions {
 
   import ConnectThreeElements.*
 
-  def find(board: Board, x: Int, y: Int): Option[Player] = board.find(d => (d.x == x) && (d.y == y)).map(_.player)
+  def find(board: Board, x: Int, y: Int): Option[Player] = board find(d => (d.x == x) && (d.y == y)) map(_.player)
 
   def firstAvailableRow(board: Board, x: Int): Option[Int] =
     (for
@@ -116,28 +114,26 @@ object ConnectThreeFunctions {
         case _                  => ()
   def printBoard(board: Board): Unit = {printBoards(Seq(board)); println()}
 
-  def printGame(g: Game): Unit =
-    printBoards(g)
-    g.endPrint()
+  def printGame(g: Game): Unit = {printBoards(g); g.endPrint()}
 
   trait AI(val side: Player) {
-    def play(board: Board): Board
+    def play(board: Board): Int
     override def toString: String = s"${getClass.getSimpleName}($side)"
   }
   import scala.util.Random
   class RandomAI(side: Player, seed: Int = 42) extends AI(side){
     val rand = Random(seed)
-    override def play(board: Board): Board =
+    override def play(board: Board): Int =
       val avPos: Seq[(Int, Int)] = for
         x <- 0 to bound
         y <- firstAvailableRow(board, x)
       yield
         (x, y)
       val randPos: (Int, Int) = avPos(rand nextInt avPos.size)
-      board :+ Disk(randPos._1, randPos._2, side)
+      randPos._1
   }
   class SmartAI(side: Player) extends AI(side){
-    def play(board: Board): Board =
+    def play(board: Board): Int =
       val avPosCounts: Map[(Int, Int), Int] = (
         for
           x <- 0 to bound
@@ -145,7 +141,7 @@ object ConnectThreeFunctions {
           c = board disksOnRow(y, side)
         yield (x, y) -> c).toMap
       val bestPos: (Int, Int) = avPosCounts.maxBy(_._2)._1
-      board :+ Disk(bestPos._1, bestPos._2, side)
+      bestPos._1
   }
 }
 
@@ -209,20 +205,3 @@ object ConnectThree extends App:
   printGame(endGame)
 
   println()
-
-  private def autoPlayAi(ai1: AI, ai2: AI, log: Boolean = false): Unit =
-    assert(ai1.side != ai2.side)
-    println(s"Start match! $ai1 vs $ai2")
-    @tailrec
-    def _autoPlayAi(b: Board, ai1: AI, ai2: AI): Unit = b.winner match
-      case Some(w) => printBoard(b); println(s"The winner is $w")
-      case _ =>
-        if log then printBoard(b)
-        _autoPlayAi(ai1 play b, ai2, ai1)
-    _autoPlayAi(emptyBoard, ai1, ai2)
-
-  autoPlayAi(RandomAI(X, seed = 42), SmartAI(O), log = true)
-  autoPlayAi(RandomAI(X, seed = 18), SmartAI(O), log = true)
-  autoPlayAi(RandomAI(X, seed = 69), SmartAI(O), log = true)
-
-  autoPlayAi(SmartAI(O), RandomAI(X), log = true)
